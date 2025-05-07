@@ -2,13 +2,9 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
-import type { z } from "zod"
 import { Button } from "@/components/ui/button"
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { signUpSchema } from "@/lib/auth-client"
+import { Label } from "@/components/ui/label"
 import { useToast } from "@/hooks/use-toast"
 
 export function SignUpForm() {
@@ -16,17 +12,14 @@ export function SignUpForm() {
   const router = useRouter()
   const { toast } = useToast()
 
-  const form = useForm<z.infer<typeof signUpSchema>>({
-    resolver: zodResolver(signUpSchema),
-    defaultValues: {
-      name: "",
-      email: "",
-      password: "",
-    },
-  })
-
-  async function onSubmit(values: z.infer<typeof signUpSchema>) {
+  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
     setIsLoading(true)
+
+    const formData = new FormData(event.currentTarget)
+    const name = formData.get("name") as string
+    const email = formData.get("email") as string
+    const password = formData.get("password") as string
 
     try {
       const response = await fetch("/api/auth/sign-up", {
@@ -34,7 +27,11 @@ export function SignUpForm() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(values),
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+        }),
       })
 
       const data = await response.json()
@@ -44,8 +41,8 @@ export function SignUpForm() {
       }
 
       toast({
-        title: "Account created",
-        description: "You have successfully created an account",
+        title: "Success",
+        description: "Account created successfully",
       })
 
       router.push("/sign-in")
@@ -61,51 +58,54 @@ export function SignUpForm() {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Name</FormLabel>
-              <FormControl>
-                <Input placeholder="John Doe" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input type="email" placeholder="john@example.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input type="password" placeholder="********" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading ? "Creating account..." : "Create account"}
-        </Button>
+    <div className="grid gap-6">
+      <form onSubmit={onSubmit}>
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="name">Name</Label>
+            <Input
+              id="name"
+              name="name"
+              placeholder="John Doe"
+              type="text"
+              autoCapitalize="none"
+              autoComplete="name"
+              autoCorrect="off"
+              disabled={isLoading}
+              required
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              name="email"
+              placeholder="name@example.com"
+              type="email"
+              autoCapitalize="none"
+              autoComplete="email"
+              autoCorrect="off"
+              disabled={isLoading}
+              required
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="new-password"
+              disabled={isLoading}
+              required
+            />
+          </div>
+          <Button disabled={isLoading}>
+            {isLoading && <span className="mr-2">Loading...</span>}
+            Sign Up
+          </Button>
+        </div>
       </form>
-    </Form>
+    </div>
   )
 }

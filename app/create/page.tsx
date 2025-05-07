@@ -45,10 +45,18 @@ export default function CreateNewsletterPage() {
         setContent(data.content)
       }
 
-      toast({
-        title: "Success",
-        description: "Content generated successfully",
-      })
+      if (data.isFallback) {
+        toast({
+          title: "Note",
+          description: data.message,
+          variant: "default",
+        })
+      } else {
+        toast({
+          title: "Success",
+          description: "Content generated successfully",
+        })
+      }
     } catch (error) {
       toast({
         title: "Error",

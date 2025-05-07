@@ -15,8 +15,8 @@ model User {
   name          String?
   email         String      @unique
   emailVerified DateTime?
-  password      String
   image         String?
+  hashedPassword String?
   bio           String?     @db.Text
   customLink    String?     @unique
   createdAt     DateTime    @default(now())
