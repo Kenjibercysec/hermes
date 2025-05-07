@@ -1,0 +1,87 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String      @id @default(cuid())
+  name          String?
+  email         String      @unique
+  emailVerified DateTime?
+  password      String
+  image         String?
+  bio           String?     @db.Text
+  customLink    String?     @unique
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  newsletters   Newsletter[]
+  followers     Follow[]    @relation("Following")
+  following     Follow[]    @relation("Follower")
+  
+  role          Role        @default(USER)
+}
+
+model Follow {
+  id          String   @id @default(cuid())
+  follower    User     @relation("Follower", fields: [followerId], references: [id], onDelete: Cascade)
+  followerId  String
+  following   User     @relation("Following", fields: [followingId], references: [id], onDelete: Cascade)
+  followingId String
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+}
+
+model Newsletter {
+  id          String   @id @default(cuid())
+  title       String
+  subtitle    String?
+  content     String   @db.Text
+  imageUrl    String?
+  published   Boolean  @default(false)
+  scheduledFor DateTime?
+  category    String?
+  author      User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  includedIn  DailyNewspaperItem[]
+}
+
+model DailyNewspaper {
+  id          String   @id @default(cuid())
+  date        DateTime @unique
+  title       String
+  summary     String   @db.Text
+  imageUrl    String?
+  createdAt   DateTime @default(now())
+  
+  items       DailyNewspaperItem[]
+}
+
+model DailyNewspaperItem {
+  id              String         @id @default(cuid())
+  newspaper       DailyNewspaper @relation(fields: [newspaperId], references: [id], onDelete: Cascade)
+  newspaperId     String
+  newsletter      Newsletter     @relation(fields: [newsletterId], references: [id], onDelete: Cascade)
+  newsletterId    String
+  category        String
+  highlight       Boolean        @default(false)
+  summary         String         @db.Text
+  
+  @@unique([newspaperId, newsletterId])
+}
+
+enum Role {
+  USER
+  ADMIN
+}
